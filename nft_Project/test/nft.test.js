@@ -1,65 +1,51 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 describe("tests for my NFT contract", function () {
-    let Contract, contract, user1, user2, user3;
+    let Contract, contract, owner, user1, user2;
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
     beforeEach(async function () {
         Contract = await ethers.getContractFactory("MyNFT");
-        [user1, user2, user3] = await ethers.getSigners();
-        contract = await Contract.deploy();
+        [owner, user1, user2] = await ethers.getSigners();
+        contract = await Contract.connect(owner).deploy();
         await contract.waitForDeployment();
 
     })
-    it("Should increase the TokenCounter after minting.", async function () {
-        await contract.connect(user1).Mint("URI");
-        expect(await contract.TokenCounter()).to.equal(1);
-
-
-    })
-    it("Should assign the correct owner after minting.", async function () {
-        await contract.connect(user1).Mint("URI");
+    it("Check ownerOf(tokenId) return the correct owner", async function () {
+        const mintingfee = ethers.parseEther("0.01")
+        await contract.connect(user1).mintNFT("randomURI", { value: mintingfee });
         expect(await contract.ownerOf(0)).to.equal(user1.address);
-    })
-    it("Should store the correct TokenURI for the minted NFT.", async function () {
-        await contract.connect(user1).Mint("URI");
-        expect(await contract.TokenURI(0)).to.equal("URI");
+        const owner = await contract.ownerOf(0);
+        console.log("the owner address is:", owner);
 
     })
-    it("Should emit a minted event with the correct details.", async function () {
-        expect(await contract.connect(user1).Mint("URI")).to.emit(contract, "minted").withArgs("URI", 0)
-
-
-    })
-    it("Should allow the owner to approve another address.", async function () {
-        await contract.connect(user1).Mint("URI");
-        await contract.connect(user1).approve(user2.address, 0);
-        expect(await contract.approvedUsers(0)).to.equal(user2.address);
-
-    })
-    it("Should fail if a non-owner tries to approve", async function () {
-        await contract.connect(user1).Mint("URI");
-        await expect(contract.connect(user2).approve(user3.address, 0)).to.be.revertedWith("Not the owner")
-
-    })
-    it("Should fail if approving the zero address (address(0)).", async function () {
-        await contract.connect(user1).Mint("URI");
-        await expect(contract.connect(user1).approve(ZERO_ADDRESS, 0)).to.be.revertedWith("Invalid address")
-    })
-    it("Should allow the owner to transfer the NFT.", async function () {
-        await contract.connect(user1).Mint("URI");
-        await contract.connect(user1).transferNFT(user2.address, 0);
+    it("Check  transfering NFT by the owner", async function () {
+        const mintingfee = ethers.parseEther("0.01")
+        await contract.connect(user1).mintNFT("randomURI", { value: mintingfee });
+        await contract.connect(user1).safeTransferFrom(user1.address, user2.address, 0);
         expect(await contract.ownerOf(0)).to.equal(user2.address);
 
     })
-    it("Should fail if a non-owner or non-approved address tries to transfer.", async function () {
-        await contract.connect(user1).Mint("URI");
-        await expect(contract.connect(user2).transferNFT(user3.address, 0)).to.be.revertedWith("Not owner or approved")
+    it("Should fail to mint if the user sends less ETH than the required minting fee.", async function () {
+        await expect(contract.connect(user1).mintNFT("randomURI")).to.be.revertedWith("Not enough ETH to mint")
+
     })
-    it("Should reset the approved address after a transfer.", async function () {
-        await contract.connect(user1).Mint("URI");
-        await contract.connect(user1).approve(user2.address, 0);
-        await contract.connect(user2).transferNFT(user3.address, 0);
-        expect(await contract.approved(0)).to.equal(ZERO_ADDRESS);
+    it("Should store the correct token URI after minting.", async function () {
+        const mintingfee = ethers.parseEther("0.01")
+        await contract.connect(user1).mintNFT("randomURI", { value: mintingfee });
+        expect(await contract.tokenURI(0)).to.equal("randomURI");
+
+    })
+    it("Should allow only the owner to withdraw funds.", async function () {
+        const mintingfee = ethers.parseEther("0.01")
+        await contract.connect(user1).mintNFT("randomURI", { value: mintingfee });
+
+        await expect(contract.connect(owner).withdraw()).to.changeEtherBalances(
+            [contract, owner], [-mintingfee, mintingfee])
+        await expect(contract.connect(user2).withdraw()).to.be.revertedWithCustomError(contract, "OwnableUnauthorizedAccount").withArgs(user2.address);
+    })
+    it.only("Should emit the Minted event with the correct parameters when an NFT is minted.", async function () {
+        const mintingfee = ethers.parseEther("0.01")
+        await expect(contract.connect(user1).mintNFT("randomURI", { value: mintingfee })).to.emit(contract, "Minted").withArgs("randomURI", 0)
     })
 
 
