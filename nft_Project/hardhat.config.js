@@ -1,17 +1,24 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-gas-reporter");
-require("@nomicfoundation/hardhat-chai-matchers"); // ✅ Add this line
+require("@nomicfoundation/hardhat-chai-matchers");
+require("dotenv").config(); // ✅ Import dotenv
 
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
     version: "0.8.20",
     settings: {
       optimizer: {
-        enabled: true,  // ✅ Turns on optimizer (reduces gas)
-        runs: 200       // ✅ Adjust for better efficiency
+        enabled: true,
+        runs: 200
       }
     }
+  },
+  networks: {
+    celo_alfajores: {
+      url: "https://alfajores-forno.celo-testnet.org",
+      accounts: [process.env.PRIVATE_KEY], // ✅ Securely loads the private 
+      timeout: 200000,
+    },
   },
   gasReporter: {
     enabled: true,
