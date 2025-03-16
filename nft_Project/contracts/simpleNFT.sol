@@ -46,7 +46,7 @@ contract MyNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
 
     function withdraw() external nonReentrant onlyOwner {
         /// @notice Withdraws all ETH from the contract to the owner.
-        /// @dev Uses `call` instead of `transfer` to prevent gas-related issues.
+
         uint256 amount = address(this).balance;
         (bool success, ) = payable(owner()).call{value: amount}("");
         require(success, "ETH transfer failed");
