@@ -8,10 +8,11 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 /// @author Achraf
 /// @notice This contract allows users to mint NFTs by paying a minting fee.
 /// @dev Uses OpenZeppelin's ERC721URIStorage for metadata management.
+/// @custom:security-contact bradjiachraf01@gmail.com
 
 contract MyNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
     /// @dev This value is immutable and set to `0.01 ether` at deployment.
-    uint256 public immutable mintingFee = 0.01 ether;
+    uint256 public constant mintingFee = 0.01 ether;
     /// @dev This value increments with each mint operation.
     uint256 public tokenCounter;
 
@@ -22,7 +23,9 @@ contract MyNFT is ERC721URIStorage, Ownable, ReentrancyGuard {
         tokenCounter = 0;
     }
 
-    function mintNFT(string memory _tokenURI) public payable returns (uint256) {
+    function mintNFT(
+        string memory _tokenURI
+    ) public payable nonReentrant returns (uint256) {
         require(msg.value >= mintingFee, "Not enough ETH to mint");
 
         uint256 tokenId = tokenCounter;
