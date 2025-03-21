@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
@@ -15,6 +15,7 @@ contract nftMarketPlace is Ownable, ReentrancyGuard {
     error PriceProblem(uint price);
     error duplicateListing(address listing);
     error InvalidWithdrawal(uint requested, uint available);
+    error NoFundsToWithdraw(uint Balance);
     event ItemListed(
         address indexed owner,
         address indexed nft,
@@ -38,6 +39,7 @@ contract nftMarketPlace is Ownable, ReentrancyGuard {
         uint256 tokenId,
         uint256 newPrice
     );
+    event FeesWithdrawn(address indexed owner, uint256 amount);
     event Received(address sender, uint256 amount);
 
     struct Listing {
@@ -91,11 +93,14 @@ contract nftMarketPlace is Ownable, ReentrancyGuard {
         return listings[nft][tokenId];
     }
 
+    mapping(address => uint256) public pendingWithdrawals;
+
     function buyItem(
         address nft,
         uint256 tokenId
     ) external payable nonReentrant {
         Listing storage nftlisting = listings[nft][tokenId];
+
         if (nftlisting.owner == address(0)) {
             revert NFTNotListed({nftAddress: nft, theID: tokenId});
         }
@@ -105,24 +110,20 @@ contract nftMarketPlace is Ownable, ReentrancyGuard {
                 amount: msg.value
             });
         }
-        uint256 feeAmount = (nftlisting.price * marketPlaceFee) / 10_000;
 
+        uint256 feeAmount = (nftlisting.price * marketPlaceFee) / 10_000;
+        uint256 sellerAmount = msg.value - feeAmount;
+        pendingWithdrawals[nftlisting.owner] += sellerAmount;
+        marketPlaceBalance += feeAmount;
+        delete listings[nft][tokenId];
         IERC721(nft).safeTransferFrom(
             nftlisting.owner,
             msg.sender,
             tokenId,
-            bytes("")
+            ""
         );
-        delete listings[nft][tokenId];
-        (bool success, ) = payable(nftlisting.owner).call{
-            value: msg.value - feeAmount
-        }("");
-        require(success, "transfer failed");
-        (bool feeSuccess, ) = payable(address(this)).call{value: feeAmount}("");
-        require(feeSuccess, "Fee transfer failed");
 
-        emit ItemSold(msg.sender, nft, tokenId, msg.value - feeAmount);
-        marketPlaceBalance += feeAmount;
+        emit ItemSold(msg.sender, nft, tokenId, sellerAmount);
     }
 
     function cancelListing(address nft, uint256 tokenId) external {
@@ -161,6 +162,18 @@ contract nftMarketPlace is Ownable, ReentrancyGuard {
         emit PriceUpdated(msg.sender, nft, tokenId, newPrice);
     }
 
+    function withdrawFunds() external nonReentrant {
+        uint256 amount = pendingWithdrawals[msg.sender];
+        if (amount == 0) {
+            revert NoFundsToWithdraw({Balance: amount});
+        }
+
+        pendingWithdrawals[msg.sender] = 0;
+
+        (bool success, ) = payable(msg.sender).call{value: amount}("");
+        require(success, "Withdrawal failed");
+    }
+
     function withdrawFees(uint amount) external onlyOwner {
         if (amount > marketPlaceBalance || amount <= 0) {
             revert InvalidWithdrawal({
@@ -171,6 +184,7 @@ contract nftMarketPlace is Ownable, ReentrancyGuard {
         marketPlaceBalance -= amount;
         (bool transfer, ) = payable(owner()).call{value: amount}("");
         require(transfer, "Withdrawal failed");
+        emit FeesWithdrawn(owner(), amount);
     }
 
     receive() external payable {
