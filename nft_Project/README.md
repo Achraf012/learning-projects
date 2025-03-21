@@ -1,114 +1,102 @@
-# MyNFT Project
+# NFT Marketplace Project
 
-## 📌 Overview
-This is a simple NFT (Non-Fungible Token) smart contract built with Solidity. The contract allows users to mint, approve, and transfer NFTs. The project includes full unit tests written in Hardhat to ensure functionality.
+## 📌 What is this project?
 
-## 🛠️ Features
-- Mint NFTs with a unique TokenURI
-- Approve another address to transfer NFTs
-- Transfer NFTs between users
-- Retrieve NFT owner and metadata
-- Prevents reentrancy attacks
+This project is a decentralized NFT marketplace built with Solidity. It allows users to mint NFTs, list them for sale, buy, and cancel listings. The marketplace also includes security features to prevent reentrancy attacks and ensures safe transactions.
 
-## 🚀 Technologies Used
-- Solidity (Smart Contract Language)
-- Hardhat (Development & Testing Framework)
-- JavaScript (For Writing Tests)
-- Ethers.js (Interacting with the Blockchain)
-- OpenZeppelin (Security & Standards)
+## 🤔 Why build this?
 
-## 📂 Project Structure
-```
-nft_Project/
-│── contracts/
-│   ├── MyNFT.sol          # NFT Smart Contract
-│   ├── ReentrancyAttack.sol  # Attack Contract for testing security
-│── test/
-│   ├── nft.test.js        # Unit Tests for NFT contract
-│   ├── attackTest.js      # Tests for reentrancy attack
-│── hardhat.config.js      # Hardhat Configuration
-│── package.json          # Project Dependencies
-│── README.md             # Project Documentation
-```
+Traditional NFT marketplaces often face security vulnerabilities such as reentrancy attacks and improper fund handling. This project aims to provide a secure, transparent, and efficient platform where users can trade NFTs safely while ensuring fair fee deductions and preventing malicious activities.
 
-## 🔧 Installation & Setup
+## 📝 Contracts
 
-### Clone the repository:
-```sh
-git clone https://github.com/Achraf012/learning-projects.git
-cd learning-projects/nft_Project
-```
+### 1. **SimpleNFT.sol**
 
-### Install dependencies:
+- ERC721 contract for minting NFTs.
+- Includes a refund function for unsuccessful transactions.
+- Integrated with **ReentrancyAttack.sol** for testing security vulnerabilities.
+
+### 2. **ReentrancyAttack.sol**
+
+- Designed to simulate reentrancy attacks against the **SimpleNFT.sol** contract.
+- Used for testing the security of the refund function.
+
+### 3. **Marketplace.sol**
+
+- A marketplace contract where users can list their NFTs for sale.
+- Implements listing, buying, price updates, and listing cancellations.
+- Ensures secure transactions with **ReentrancyGuard**.
+- Implements marketplace fees.
+
+## ✨ Features
+
+✅ **Mint NFTs**: Users can create unique ERC721 tokens.
+
+✅ **Secure Listings**: Only NFT owners can list their assets.
+
+✅ **Buy & Sell**: Users can securely buy NFTs listed on the marketplace.
+
+✅ **Reentrancy Protection**: The contracts are tested against reentrancy vulnerabilities.
+
+✅ **Refund Mechanism**: A refund function is included for cases where transactions fail.
+
+
+✅ **Marketplace Fees**: Ensures fair transactions with a small fee deduction.
+
+## 🛠️ Tests
+
+The test suite includes:
+
+- **Unit Tests for SimpleNFT.sol**:
+  - ✅ NFT minting
+  - ✅ Refund function security
+  - ✅ Ownership checks
+- **Security Tests using ReentrancyAttack.sol**:
+  - ✅ Reentrancy attacks on refund function
+- **Unit Tests for Marketplace.sol**:
+  - ✅ Listing NFTs
+  - ✅ Buying NFTs
+  - ✅ Updating prices
+  - ✅ Canceling listings
+  - ✅ Fee deduction verification
+
+## ⚙️ Installation & Usage
+
+### Prerequisites
+
+- Node.js & npm
+- Hardhat
+- OpenZeppelin Contracts
+
+### Setup
+
 ```sh
 npm install
 ```
 
-### Compile the smart contract:
-```sh
-npx hardhat compile
-```
+### Run Tests
 
-### Run the tests:
 ```sh
 npx hardhat test
 ```
 
-## 📜 Smart Contract Functions
+### Deploy Contracts
 
-### 🖼️ Mint NFT
-```solidity
-function mintNFT(string memory _tokenURI) public payable returns (uint256);
+```sh
+npx hardhat run scripts/deploy.js --network <network>
 ```
-- Mints a new NFT with a unique TokenURI.
-- Requires a minting fee of **0.01 ETH**.
-- Refunds excess ETH.
 
-### ✅ Approve NFT
-```solidity
-function approve(address to, uint256 tokenID) external;
+### Interacting with Contracts
+
+- After deployment, interact with the marketplace using scripts or Hardhat console:
+
+```sh
+npx hardhat console --network <network>
 ```
-- Allows another address to transfer the NFT.
-- Can only be called by the NFT owner.
 
-### 🔄 Transfer NFT
-```solidity
-function transferFrom(address from, address to, uint tokenID) external;
-```
-- Transfers an NFT to another address.
-- Can be done by the owner or an approved user.
-
-### 🔍 Get Owner of NFT
-```solidity
-function ownerOf(uint TokenID) public view returns (address);
-```
-- Returns the owner's address of a specific NFT.
-
-### 🔗 Get Token URI
-```solidity
-function tokenURI(uint TokenID) public view returns (string memory);
-```
-- Returns the metadata URI of an NFT.
-
-### 💰 Withdraw Contract Balance
-```solidity
-function withdraw() external onlyOwner;
-```
-- Sends all contract funds to the owner.
-- Uses **nonReentrant** modifier for security.
-
-## 🔒 Security Features
-- **ReentrancyGuard**: Prevents reentrancy attacks on minting and withdrawal.
-- **Refund Handling**: Ensures users receive excess ETH back securely.
-- **OnlyOwner Protection**: Restricted access to critical functions.
-
-## 📌 Future Improvements
-- Add a marketplace for buying and selling NFTs.
-- Implement staking for rewards.
-- Improve gas optimization and reduce transaction costs.
-
-## 🏆 Author
-**Achraf** - Solidity Developer
+- Call functions like `mintNFT()`, `listNFT()`, `buyNFT()`, and `cancelListing()`.
 
 ## 📜 License
+
 This project is licensed under the MIT License.
+
