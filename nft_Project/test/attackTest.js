@@ -17,7 +17,7 @@ describe("Reentrancy Attack Test", function () {
         await attackerContract.waitForDeployment();
     });
 
-    it.only("Should block the reentrancy attack", async function () {
+    it("Should block the reentrancy attack", async function () {
         await expect(
             attackerContract.connect(attacker).Attack({ value: ethers.parseEther("0.02") })
         ).to.be.revertedWith("Refund failed")

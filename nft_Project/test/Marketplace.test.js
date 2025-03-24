@@ -44,7 +44,7 @@ describe("NFT MarketPlace tests", function () {
         it("Should revert if the NFT is already listed", async function () {
             await mintAndApprove(user1, "randomURI", 0);
             await marketplace.connect(user1).listItem(nft.target, 0, ethers.parseEther("1"), " test nft");
-            await expect(marketplace.connect(user1).listItem(nft.target, 0, ethers.parseEther("1"), " test nft")).to.be.revertedWithCustomError(marketplace, "duplicateListing").withArgs(user1.address)
+            await expect(marketplace.connect(user1).listItem(nft.target, 0, ethers.parseEther("1"), " test nft")).to.be.revertedWithCustomError(marketplace, "DuplicateListing").withArgs(user1.address)
 
         })
         it("Should emit ItemListed event on successful listing", async function () {
