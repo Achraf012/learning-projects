@@ -1,11 +1,11 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("hardhat-gas-reporter");
 require("@nomicfoundation/hardhat-chai-matchers");
-require("dotenv").config(); // ✅ Import dotenv
+require("dotenv").config();
 
 module.exports = {
   solidity: {
-    version: "0.8.20",
+    version: "0.8.21",
     settings: {
       optimizer: {
         enabled: true,
@@ -16,7 +16,7 @@ module.exports = {
   networks: {
     celo_alfajores: {
       url: "https://alfajores-forno.celo-testnet.org",
-      accounts: [process.env.PRIVATE_KEY], // ✅ Securely loads the private 
+      accounts: [process.env.PRIVATE_KEY],
       timeout: 200000,
     },
   },
