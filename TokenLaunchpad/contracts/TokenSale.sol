@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol"; // <-- Import SafeERC20
+import "./vesting.sol";
 
 contract tokenSale is Ownable, ReentrancyGuard {
     enum SaleType {
@@ -19,6 +20,10 @@ contract tokenSale is Ownable, ReentrancyGuard {
     uint256 raisedAmount;
     uint256 totalETHCommitted;
     uint256 public totalTokensForSale;
+    vesting public vestingContract;
+    uint256 public cliffDuration;
+    uint256 public vestingDuration;
+
     mapping(address => uint256) investors; //  Amount each user invested
     mapping(address => uint256) tokenBalances; // Tokens allocated per user.
     error hardCapExceeded();
@@ -42,6 +47,9 @@ contract tokenSale is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     constructor(
+        vesting _vestingContract,
+        uint256 _cliffDuration,
+        uint256 _vestingDuration,
         IERC20 _tokenAddress,
         uint256 _price,
         uint256 _StartTime,
@@ -51,6 +59,7 @@ contract tokenSale is Ownable, ReentrancyGuard {
         SaleType _saletype,
         uint256 _totalTokensForSale
     ) Ownable(msg.sender) {
+        vestingContract = _vestingContract;
         price = _price;
         StartTime = _StartTime;
         EndTime = _EndTime;
@@ -59,6 +68,8 @@ contract tokenSale is Ownable, ReentrancyGuard {
         saleType = _saletype;
         token = _tokenAddress;
         totalTokensForSale = _totalTokensForSale;
+        cliffDuration = _cliffDuration;
+        vestingDuration = _vestingDuration;
     }
 
     modifier saleIsActive() {
@@ -88,7 +99,12 @@ contract tokenSale is Ownable, ReentrancyGuard {
             uint256 tokens = (msg.value * 1e18) / price;
 
             tokenBalances[msg.sender] += tokens;
-
+            vestingContract.setVestingSchedule(
+                msg.sender,
+                tokens,
+                cliffDuration,
+                vestingDuration
+            );
             emit TokensPurchased(msg.sender, msg.value, tokens);
         } else if (saleType == SaleType.FAIRLAUNCH) {
             require(totalTokensForSale > 0, "No tokens for sale");
