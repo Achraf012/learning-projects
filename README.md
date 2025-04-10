@@ -6,7 +6,8 @@ Welcome to the **Learning Projects** repository! This repository contains variou
 Each project is organized into its own folder within this repository. This structure helps keep projects separate and manageable.
 
 ### Current Projects:
-- **NFT Project**: A simple NFT smart contract with minting, approval, and transfer functionality.
+- **NFT Project**: a decentralized NFT marketplace.
+- **TokenLaunchpad Project** : A decentralized token launchpad that supports Presale, Fair Launch, and IDO with optional vesting and full investor protection.
 - *(More projects will be added as I continue learning and building.)*
 
 ## Technologies Used
