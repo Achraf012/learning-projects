@@ -35,7 +35,7 @@ A portfolio project that showcases a complete Token Sale and Vesting system buil
 
 ## 🧪 Testing
 
-Tests are written using Hardhat and Chai, covering:
+Tests are written using foundry covering:
 
 - Token purchase flows
 - Cap logic
@@ -45,8 +45,8 @@ Tests are written using Hardhat and Chai, covering:
 ## 🧰 Tech Stack
 
 - Solidity
-- Hardhat
-- Chai / Mocha
+- foundry
+- forge
 - VS Code
 
 ## 📂 Structure
