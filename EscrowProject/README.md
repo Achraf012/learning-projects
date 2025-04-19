@@ -1,66 +1,66 @@
-## Foundry
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+# EscrowProject
 
-Foundry consists of:
+## Project Description
+The **EscrowProject** implements a decentralized escrow and payment system using Solidity. This system ensures secure, conditional transfers of funds between parties, protecting both the buyer and seller during the transaction process.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Features
+- **Escrow**: Holds funds until both the buyer and seller fulfill their agreement.
+- **Payment Release**: Funds are only released when specified conditions are met.
+- **Security**: Protection against malicious behaviors, including reentrancy attacks.
 
-## Documentation
 
-https://book.getfoundry.sh/
+## Technology Stack
+- **Solidity**: Smart contract development.
+- **Foundry**: Used for smart contract testing and local development.
+- **Ethereum**: Blockchain network used for contract deployment.
+
+## Contracts
+### 1️⃣ **Escrow.sol**
+- Manages escrow accounts and ensures funds are only released when conditions are met.
+- Implements functionality to deposit, release, or refund funds based on transaction status.
+
+### 2️⃣ **EscrowFactory.sol** (To be implemented)
+- Manages the creation of multiple escrow contracts.
+- Allows users to create new escrow contracts with different conditions for each transaction.
+
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Achraf012/learning-projects.git
+   cd learning-projects/EscrowProject
+   ```
+
+2. Install dependencies:
+   ```bash
+   forge install
+   ```
+
+3. Compile contracts:
+   ```bash
+   forge build
+   ```
+
+4. Run tests using Foundry:
+   ```bash
+   forge test
+   ```
 
 ## Usage
+1. **Create an Escrow Contract**: 
+   - Use the **EscrowFactory** contract to create a new escrow contract.
+   - Customize the conditions, such as payment amount, buyer and seller addresses, and escrow release conditions.
 
-### Build
+2. **Make Payments**: 
+   - Both buyer and seller can interact with the **Escrow.sol** contract to deposit funds, track transaction progress, and confirm the fulfillment of conditions.
 
-```shell
-$ forge build
-```
+3. **Funds Release**: 
+   - Once both parties fulfill their conditions, funds are released to the seller.
+   - If the conditions are not met, funds are refunded to the buyer.
 
-### Test
+## License
+This project is licensed under the **MIT License**.
 
-```shell
-$ forge test
-```
+---
 
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+For more information or assistance, feel free to reach out to me on [LinkedIn](https://www.linkedin.com/in/achraf-bradji-476157335/).
