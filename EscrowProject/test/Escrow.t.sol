@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 import "forge-std/Test.sol";
-import "../src/Escrow.sol";
+import "../contracts/Escrow.sol";
 import "forge-std/console.sol";
 pragma solidity 0.8.21;
 
@@ -8,12 +8,15 @@ contract EscrowTest is Test {
     Escrow public escrow;
     address buyer;
     address payable seller;
+    address payable feeRecipient;
     address arbitrator;
     uint128 amount;
     uint32 deadline;
     uint32 duration;
+    uint16 feeAmount;
 
     function setUp() public {
+        // feeRecipient = payable(makeAddr("feeRecipient"));
         buyer = makeAddr("buyer");
         seller = payable(makeAddr("seller"));
         arbitrator = makeAddr("arbitrator");
@@ -21,9 +24,19 @@ contract EscrowTest is Test {
         vm.deal(seller, 1 ether);
         amount = 1 ether;
         duration = 3700;
+        // feeAmount = 3;
+
         deadline = uint32(block.timestamp + duration);
 
-        escrow = new Escrow(seller, arbitrator, buyer, amount, deadline);
+        escrow = new Escrow(
+            seller,
+            arbitrator,
+            feeRecipient,
+            buyer,
+            amount,
+            deadline,
+            feeAmount
+        );
     }
 
     function testBuyerCanDeposit() external {
@@ -142,12 +155,5 @@ contract EscrowTest is Test {
         vm.prank(caller);
         vm.expectRevert();
         escrow.approve();
-    }
-
-    function testFuzz_RevertIfDeadlineIsInPast(uint32 fuzzedDeadline) external {
-        vm.assume(fuzzedDeadline < 3600);
-
-        vm.expectRevert();
-        new Escrow(seller, arbitrator, buyer, amount, fuzzedDeadline);
     }
 }

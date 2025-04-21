@@ -7,8 +7,10 @@ contract Escrow is ReentrancyGuard {
     address payable immutable seller;
     address immutable buyer;
     address immutable arbitrator;
+    address payable immutable feeRecepient;
     uint128 amount;
     uint32 immutable deadline;
+    uint16 feeAmount;
 
     error PriceProblem(uint256 price, uint256 amount);
     error NotTheOwner(address owner, address user);
@@ -21,7 +23,7 @@ contract Escrow is ReentrancyGuard {
     error WrongAddress();
     error DeadlinePassed();
     error StillActive();
-    error InvalidDeadline();
+    // error InvalidDeadline();
 
     event Deposited(address indexed buyer, uint256 amount);
     event Approved(address indexed seller);
@@ -45,18 +47,22 @@ contract Escrow is ReentrancyGuard {
     constructor(
         address payable _seller,
         address _arbitrator,
+        address payable _feeRecipient,
         address _buyer,
         uint128 _amount,
-        uint32 duration
+        uint32 duration,
+        uint16 _feeAmount
     ) {
-        if (duration < 3600 || duration > 30 days) {
-            revert InvalidDeadline();
-        }
+        // if (duration < 3600 || duration > 30 days) {
+        //     revert InvalidDeadline();
+        // }
         seller = _seller;
         arbitrator = _arbitrator;
         buyer = _buyer;
+        feeRecepient = _feeRecipient;
         deadline = uint32(block.timestamp + duration);
         amount = _amount;
+        feeAmount = _feeAmount;
         state = EscrowState.Created;
     }
 
@@ -66,6 +72,10 @@ contract Escrow is ReentrancyGuard {
 
     fallback() external payable {
         revert("Fallback not allowed");
+    }
+
+    function getFeeAmount() external view returns (uint16) {
+        return feeAmount;
     }
 
     function getState() external view returns (EscrowState) {
@@ -111,11 +121,15 @@ contract Escrow is ReentrancyGuard {
         if (block.timestamp > deadline) {
             revert DeadlinePassed();
         }
-
-        (bool success, ) = seller.call{value: amount}("");
+        uint128 fee = uint128((uint256(amount) * feeAmount) / 100);
+        uint128 amountAfterFee = amount - fee;
+        (bool success, ) = seller.call{value: amountAfterFee}("");
         require(success, "transfer funds failed");
-        emit FundsReleased(seller, amount);
+        (bool success2, ) = feeRecepient.call{value: fee}("");
+        require(success2, "transfer fee failed");
+        emit FundsReleased(seller, amountAfterFee);
         delete amount;
+
         state = EscrowState.Released;
     }
 
@@ -145,10 +159,16 @@ contract Escrow is ReentrancyGuard {
             revert WrongAddress();
         }
 
-        (bool success, ) = to.call{value: amount}("");
+        uint128 fee = uint128((uint256(amount) * feeAmount) / 100);
+        uint128 amountAfterFee = amount - fee;
+        (bool success, ) = to.call{value: amountAfterFee}("");
         require(success, "transfer funds failed");
-        emit DisputeResolved(to, amount);
+        (bool success2, ) = feeRecepient.call{value: fee}("");
+        require(success2, "transfer fee failed");
+        emit FundsReleased(to, amountAfterFee);
         delete amount;
+
+        emit DisputeResolved(to, amountAfterFee);
         state = EscrowState.Resolved;
     }
 

@@ -10,14 +10,17 @@ contract factoryTest is Test {
         address seller,
         address buyer,
         address arbitrator,
-        uint32 duration
+        uint32 duration,
+        uint16 fee
     );
     address user;
     address payable seller;
+    address payable FeeRecipient;
     address arbitrator;
     address buyer;
     uint128 amount;
     uint32 duration;
+    uint16 feeAmount;
 
     Factory public factory;
     Escrow public escrow;
@@ -25,21 +28,38 @@ contract factoryTest is Test {
     function setUp() external {
         user = address(0x4);
         seller = payable(address(0x1));
+        FeeRecipient = payable(address(0x5));
         arbitrator = address(0x2);
         buyer = address(0x3);
         amount = 1 ether;
         duration = 7 days;
+        feeAmount = 5;
 
         factory = new Factory();
-        // factory.createEscrow(seller, arbitrator, buyer, amount, duration);
     }
 
     function testCreateEscrow() public {
         vm.startPrank(seller);
 
         vm.expectEmit(true, true, true, true);
-        emit EscrowCreated(seller, seller, buyer, arbitrator, duration);
-        factory.createEscrow(seller, arbitrator, buyer, amount, duration);
+
+        emit EscrowCreated(
+            seller,
+            seller,
+            buyer,
+            arbitrator,
+            duration,
+            feeAmount
+        );
+        factory.createEscrow(
+            seller,
+            arbitrator,
+            FeeRecipient,
+            buyer,
+            amount,
+            duration,
+            feeAmount
+        );
         address[] memory escrows = factory.getUserEscrows(seller);
 
         assertEq(escrows.length, 1);
@@ -47,20 +67,67 @@ contract factoryTest is Test {
 
     function testUserCanCreateMultipleEscrows() external {
         vm.startPrank(user);
-        factory.createEscrow(seller, arbitrator, buyer, amount, duration);
-        factory.createEscrow(seller, arbitrator, buyer, amount, duration);
+        factory.createEscrow(
+            seller,
+            arbitrator,
+            FeeRecipient,
+            buyer,
+            amount,
+            duration,
+            feeAmount
+        );
+        factory.createEscrow(
+            seller,
+            arbitrator,
+            FeeRecipient,
+            buyer,
+            amount,
+            duration,
+            feeAmount
+        );
         address[] memory escrows = factory.getUserEscrows(user);
         assertEq(escrows.length, 2);
     }
 
     function testDifferentUsersHaveSeparateEscrowLists() external {
         vm.prank(seller);
-        factory.createEscrow(seller, arbitrator, buyer, amount, duration);
+        factory.createEscrow(
+            seller,
+            arbitrator,
+            FeeRecipient,
+            buyer,
+            amount,
+            duration,
+            feeAmount
+        );
         vm.prank(user);
-        factory.createEscrow(seller, arbitrator, buyer, amount, duration);
+        factory.createEscrow(
+            seller,
+            arbitrator,
+            FeeRecipient,
+            buyer,
+            amount,
+            duration,
+            feeAmount
+        );
         address[] memory escrows = factory.getUserEscrows(user);
         assertEq(escrows.length, 1);
         address[] memory escrows2 = factory.getUserEscrows(seller);
         assertEq(escrows2.length, 1);
+    }
+
+    function testFuzz_RevertIfDeadlineIsInPast(uint32 fuzzedDeadline) external {
+        vm.assume(fuzzedDeadline < 3000);
+
+        vm.expectRevert();
+        factory.createEscrow(
+            seller,
+            arbitrator,
+            FeeRecipient,
+            buyer,
+            amount,
+            fuzzedDeadline,
+            feeAmount
+        );
     }
 }
