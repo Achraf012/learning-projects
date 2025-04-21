@@ -20,7 +20,7 @@ The **EscrowProject** implements a decentralized escrow and payment system using
 - Manages escrow accounts and ensures funds are only released when conditions are met.
 - Implements functionality to deposit, release, or refund funds based on transaction status.
 
-### 2️⃣ **EscrowFactory.sol** (To be implemented)
+### 2️⃣ **EscrowFactory.sol** 
 - Manages the creation of multiple escrow contracts.
 - Allows users to create new escrow contracts with different conditions for each transaction.
 
