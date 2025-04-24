@@ -1,66 +1,51 @@
-## Foundry
+# 💸 Decentralized Payment Streaming System
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A modular and gas-optimized smart contract system for streaming payments. This project allows senders to stream tokens to recipients over time, enabling use cases like salaries, subscriptions, and more — fully decentralized.
 
-Foundry consists of:
+## 🔍 Features
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+### ✅ v1 - Minimal Streaming Contract
 
-## Documentation
+- One-to-one payment stream
+- Funds unlock over time (block-based)
+- Withdraw anytime based on elapsed time
+- Simple cancelation logic
+- Reentrancy protected
+- Fully tested with Foundry
 
-https://book.getfoundry.sh/
+### 🔄 Upcoming: v2 - Enhanced Version (WIP)
 
-## Usage
+- Batch streams & multi-recipient support
+- Stream pausing & resuming
+- ERC20 flexibility (custom token support)
+- Better gas optimization and code modularity
 
-### Build
+## 📁 Folder Structure
 
-```shell
-$ forge build
+```
+contracts/
+  ├── v1.sol         # First version of the streaming contract
+  └── v2.sol         # Coming soon...
+
+test/
+  ├── v1.t.sol       # Full test suite for v1
+  └── reentrancyAttack.sol
 ```
 
-### Test
+## 🧪 Test Coverage (v1)
 
-```shell
-$ forge test
-```
+- Stream creation & validation
+- Time-based balance logic
+- Withdraw behavior over time
+- Cancel stream functionality
+- Reentrancy test
 
-### Format
+## ⚙️ Tech Stack
 
-```shell
-$ forge fmt
-```
+- Solidity
+- Foundry (Forge)
+- Hardhat-compatible structure
 
-### Gas Snapshots
+## 📜 License
 
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+MIT
