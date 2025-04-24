@@ -24,6 +24,8 @@ contract DPSS1 is ReentrancyGuard {
     error NoStreamOrNotThePayer();
     error StreamNotFound();
     error NothingToRefund();
+    error NotValideStreamDuration();
+    error RecipientAddressZero();
 
     event StreamCreated(
         uint256 indexed id,
@@ -45,8 +47,10 @@ contract DPSS1 is ReentrancyGuard {
 
     function createStream(
         address payable _recipient,
-        uint16 _duration
+        uint256 _duration
     ) external payable {
+        if (_recipient == address(0)) revert RecipientAddressZero();
+        if (_duration == 0) revert NotValideStreamDuration();
         streams[streamID] = Stream({
             payer: msg.sender,
             recipient: _recipient,
@@ -96,7 +100,8 @@ contract DPSS1 is ReentrancyGuard {
 
     function cancelStream(uint256 id) external nonReentrant {
         Stream storage stream = streams[id];
-        if (!stream.active) revert StreamTimeEnded();
+        uint256 endTime = stream.startTime + stream.duration;
+        if (block.timestamp > endTime) revert StreamTimeEnded();
 
         address payer = stream.payer;
         if (payer == address(0) || msg.sender != payer)
@@ -106,7 +111,6 @@ contract DPSS1 is ReentrancyGuard {
         uint256 released = stream.releasedAmount;
         uint256 rate = stream.rate;
 
-        uint256 endTime = stream.startTime + stream.duration;
         uint256 timePassed = block.timestamp < endTime
             ? block.timestamp - stream.startTime
             : stream.duration;
