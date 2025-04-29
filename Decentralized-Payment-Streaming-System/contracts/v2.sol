@@ -36,6 +36,7 @@ contract DPSS2 is ReentrancyGuard {
     error NoFundsSent();
     error StreamPaused();
     error NotEnoughToExtendStream();
+    error NotEnoughAllowance();
 
     event StreamCreated(
         uint256 indexed id,
@@ -68,22 +69,28 @@ contract DPSS2 is ReentrancyGuard {
     function createStream(
         address payable _recipient,
         uint256 _duration,
-        address _token
+        address _token,
+        uint256 _amount
     ) external payable {
-        if (msg.value == 0) revert NoFundsSent();
         if (_recipient == address(0)) revert RecipientAddressZero();
         if (_duration == 0) revert NotValideStreamDuration();
         IERC20 token = IERC20(_token);
+        uint256 amount;
         if (_token == address(0)) {
             if (msg.value == 0) revert NoFundsSent();
+            amount = msg.value;
         } else {
+            if (amount == 0) revert NoFundsSent();
             if (msg.value != 0) revert NoFundsSent();
-            token.safeTransferFrom(msg.sender, address(this), msg.value);
+            uint256 allowance = token.allowance(msg.sender, address(this));
+            if (allowance < _amount) revert NotEnoughAllowance();
+            token.safeTransferFrom(msg.sender, address(this), amount);
+            amount = _amount;
         }
         streams[streamID] = Stream({
             payer: msg.sender,
             recipient: _recipient,
-            amount: msg.value,
+            amount: amount,
             startTime: block.timestamp,
             duration: _duration,
             rate: msg.value / _duration,
@@ -94,13 +101,7 @@ contract DPSS2 is ReentrancyGuard {
             token: token
         });
 
-        emit StreamCreated(
-            streamID,
-            msg.sender,
-            _recipient,
-            msg.value,
-            _duration
-        );
+        emit StreamCreated(streamID, msg.sender, _recipient, amount, _duration);
         unchecked {
             streamID++;
         }
