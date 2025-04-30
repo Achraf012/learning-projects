@@ -80,11 +80,11 @@ contract DPSS2 is ReentrancyGuard {
             if (msg.value == 0) revert NoFundsSent();
             amount = msg.value;
         } else {
-            if (amount == 0) revert NoFundsSent();
+            if (_amount == 0) revert NoFundsSent();
             if (msg.value != 0) revert NoFundsSent();
             uint256 allowance = token.allowance(msg.sender, address(this));
             if (allowance < _amount) revert NotEnoughAllowance();
-            token.safeTransferFrom(msg.sender, address(this), amount);
+            token.safeTransferFrom(msg.sender, address(this), _amount);
             amount = _amount;
         }
         streams[streamID] = Stream({
@@ -93,7 +93,7 @@ contract DPSS2 is ReentrancyGuard {
             amount: amount,
             startTime: block.timestamp,
             duration: _duration,
-            rate: msg.value / _duration,
+            rate: amount / _duration,
             paused: false,
             releasedAmount: 0,
             pausedAt: 0,
@@ -107,15 +107,33 @@ contract DPSS2 is ReentrancyGuard {
         }
     }
 
-    function fundStream(uint256 streamId) external payable nonReentrant {
-        if (msg.value == 0) revert NoFundsSent();
+    function fundStream(
+        uint256 streamId,
+        uint256 amount
+    ) external payable nonReentrant {
         Stream storage stream = streams[streamId];
         if (stream.recipient == address(0)) revert StreamNotFound();
-        if (msg.value < stream.rate) revert NotEnoughToExtendStream();
 
-        stream.amount += msg.value;
-        uint256 extraDuration = msg.value / stream.rate;
-        stream.duration += extraDuration;
+        if (address(stream.token) == address(0)) {
+            if (msg.value == 0) revert NoFundsSent();
+            if (msg.value < stream.rate) revert NotEnoughToExtendStream();
+
+            stream.amount += msg.value;
+            uint256 extraDuration = msg.value / stream.rate;
+            stream.duration += extraDuration;
+        } else {
+            if (amount == 0) revert NoFundsSent();
+            if (amount < stream.rate) revert NotEnoughToExtendStream();
+            uint256 allowance = stream.token.allowance(
+                msg.sender,
+                address(this)
+            );
+            if (allowance < amount) revert NotEnoughAllowance();
+            stream.token.safeTransferFrom(msg.sender, address(this), amount);
+            stream.amount += amount;
+            uint256 extraDuration = amount / stream.rate;
+            stream.duration += extraDuration;
+        }
     }
 
     function withdrawFunds(uint256 streamid) external nonReentrant {
