@@ -79,25 +79,21 @@ contract LiquidityPool is ERC20 {
         _updateReserves();
     }
 
-    function swap(uint amountIn, address tokenIn) external {
+    function swap(uint amount0Out, uint amount1Out, address to) external {
+        require(msg.sender == factory, "Only router/factory can call");
         require(initialized, "Not Initialized");
+        require(
+            amount0Out != 0 || amount1Out != 0,
+            "Insufficient output amount"
+        );
+        require(to != token0 && to != token1, "Invalid recipient");
 
-        require(tokenIn == token0 || tokenIn == token1, "Invalid token");
-
-        bool isToken0In = tokenIn == token0;
-        address tokenOut = isToken0In ? token1 : token0;
-        uint reserveIn = isToken0In ? reserve0 : reserve1;
-        uint reserveOut = isToken0In ? reserve1 : reserve0;
-
-        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-
-        uint amountInWithFee = amountIn * 997;
-
-        uint numerator = amountInWithFee * reserveOut;
-        uint denominator = reserveIn * 1000 + amountInWithFee;
-        uint amountOut = numerator / denominator;
-
-        IERC20(tokenOut).safeTransfer(msg.sender, amountOut);
+        if (amount0Out > 0) {
+            IERC20(token0).safeTransfer(to, amount0Out);
+        }
+        if (amount1Out > 0) {
+            IERC20(token1).safeTransfer(to, amount1Out);
+        }
 
         _updateReserves();
     }
@@ -106,7 +102,7 @@ contract LiquidityPool is ERC20 {
         uint amountIn,
         uint256 reserveIn,
         uint256 reserveOut
-    ) internal pure returns (uint256) {
+    ) public pure returns (uint256) {
         uint256 amountInWithFee = amountIn * 997;
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
