@@ -22,7 +22,7 @@ contract router {
     function getReserves(
         address tokenA,
         address tokenB
-    ) external view returns (uint256 reserveA, uint256 reserveB) {
+    ) public view returns (uint256 reserveA, uint256 reserveB) {
         address pair = factory(factoryAddress).getPairAddress(tokenA, tokenB);
         return LiquidityPool(pair).getReserves();
     }
@@ -37,8 +37,7 @@ contract router {
         address pair = getPair(address(tokenIn), address(tokenOut));
         IERC20(tokenIn).transferFrom(msg.sender, pair, amountIn);
 
-        (uint256 reserve0, uint256 reserve1) = LiquidityPool(pair)
-            .getReserves();
+        (uint256 reserve0, uint256 reserve1) = getReserves(tokenIn, tokenOut);
         uint256 amountOut = LiquidityPool(pair).getAmountOut(
             amountIn,
             reserve0,
@@ -53,4 +52,66 @@ contract router {
         uint amount1Out = isToken0In ? amountOut : 0;
         LiquidityPool(pair).swap(amount0Out, amount1Out, to);
     }
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountA,
+        uint256 amountB,
+        uint256 minA,
+        uint256 minB
+    ) external {
+        address pair = getPair(address(tokenA), address(tokenB));
+        (uint256 reserveA, uint256 reserveB) = getReserves(tokenA, tokenB);
+        uint256 amountBOptimal = (amountA * reserveB) / reserveA;
+        uint256 amountAOptimal = (amountB * reserveA) / reserveB;
+        if (amountBOptimal <= amountB) {
+            require(
+                amountBOptimal >= minB && amountA >= minA,
+                "Amounts Less Than Minimum "
+            );
+
+            IERC20(tokenA).safeTransferFrom(msg.sender, pair, amountA);
+            IERC20(tokenB).safeTransferFrom(msg.sender, pair, amountBOptimal);
+            LiquidityPool(pair).addLiquidity(
+                amountBOptimal,
+                amountA,
+                msg.sender
+            );
+        } else {
+            require(
+                amountBOptimal >= minB && amountA >= minA,
+                "Amounts Less Than Minimum "
+            );
+
+            IERC20(tokenA).safeTransferFrom(msg.sender, pair, amountAOptimal);
+            IERC20(tokenB).safeTransferFrom(msg.sender, pair, amountB);
+            LiquidityPool(pair).addLiquidity(
+                amountAOptimal,
+                amountB,
+                msg.sender
+            );
+        }
+    }
+
+    function removeLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 lpAmount,
+        uint256 minA,
+        uint256 minB
+    ) external {
+        address pair = getPair(address(tokenA), address(tokenB));
+        (uint256 amountA, uint256 amountB) = LiquidityPool(pair)
+            .getRemoveAmounts(lpAmount);
+        require(
+            amountA >= minA && amountB >= minB,
+            "Amounts Less Than Minimum "
+        );
+
+        IERC20(pair).safeTransferFrom(msg.sender, pair, lpAmount);
+        LiquidityPool(pair).removeLiquidity(lpAmount, msg.sender);
+    }
+
+    function swapTokensForExactTokens() external {}
 }

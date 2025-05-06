@@ -6,15 +6,17 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract LiquidityPool is ERC20 {
     using SafeERC20 for IERC20;
-    address public factory;
+    address public immutable router;
+    address public immutable factory;
     address public token0;
     address public token1;
     uint256 reserve0;
     uint256 reserve1;
     bool initialized;
 
-    constructor() ERC20("LP Token", "LPT") {
+    constructor(address _router) ERC20("LP Token", "LPT") {
         factory = msg.sender;
+        router = _router;
     }
 
     function min(uint256 x, uint256 y) internal pure returns (uint256) {
@@ -47,15 +49,24 @@ contract LiquidityPool is ERC20 {
         return (reserve0, reserve1);
     }
 
+    function getRemoveAmounts(
+        uint256 lpAmount
+    ) external view returns (uint256, uint256) {
+        uint256 amount0 = (lpAmount * reserve0) / totalSupply();
+        uint256 amount1 = (lpAmount * reserve1) / totalSupply();
+        return (amount0, amount1);
+    }
+
     function _updateReserves() internal {
         reserve0 = IERC20(token0).balanceOf(address(this));
         reserve1 = IERC20(token1).balanceOf(address(this));
     }
 
-    function addLiquidity(uint amount0, uint amount1) external {
+    function addLiquidity(uint amount0, uint amount1, address to) external {
+        require(msg.sender == address(router), "Only router can call this");
+
         require(initialized, "Not Initialized");
-        IERC20(token0).safeTransferFrom(msg.sender, address(this), amount0);
-        IERC20(token1).safeTransferFrom(msg.sender, address(this), amount1);
+
         uint256 mintAmount;
         if (totalSupply() == 0) {
             mintAmount = sqrt(amount0 * amount1);
@@ -64,18 +75,20 @@ contract LiquidityPool is ERC20 {
             uint256 share1 = (amount1 * totalSupply()) / reserve1;
             mintAmount = min(share0, share1);
         }
-        _mint(msg.sender, mintAmount);
+        _mint(to, mintAmount);
         _updateReserves();
     }
 
-    function removeLiquidity(uint256 lp) external {
+    function removeLiquidity(uint256 lp, address to) external {
+        require(msg.sender == address(router), "Only router can call this");
         require(initialized, "Not Initialized");
 
         uint256 tokenAmount0 = (lp * reserve0) / totalSupply();
         uint256 tokenAmount1 = (lp * reserve1) / totalSupply();
-        _burn(msg.sender, lp);
-        IERC20(token0).safeTransfer(msg.sender, tokenAmount0);
-        IERC20(token1).safeTransfer(msg.sender, tokenAmount1);
+
+        _burn(address(this), lp);
+        IERC20(token0).safeTransfer(to, tokenAmount0);
+        IERC20(token1).safeTransfer(to, tokenAmount1);
         _updateReserves();
     }
 
