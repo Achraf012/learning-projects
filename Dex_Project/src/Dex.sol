@@ -35,18 +35,25 @@ contract router {
         address to
     ) external {
         address pair = getPair(address(tokenIn), address(tokenOut));
-        IERC20(tokenIn).transferFrom(msg.sender, pair, amountIn);
+
+        (address token0, ) = tokenIn < tokenOut
+            ? (tokenIn, tokenOut)
+            : (tokenOut, tokenIn);
+        bool isToken0In = tokenIn == token0;
 
         (uint256 reserve0, uint256 reserve1) = getReserves(tokenIn, tokenOut);
+        (uint256 reserveIn, uint256 reserveOut) = isToken0In
+            ? (reserve0, reserve1)
+            : (reserve1, reserve0);
+
         uint256 amountOut = LiquidityPool(pair).getAmountOut(
             amountIn,
-            reserve0,
-            reserve1
+            reserveIn,
+            reserveOut
         );
-        require(minAmountOut >= amountOut, "Amount Out Less Than Minimum");
-        address token0 = tokenIn < tokenOut ? tokenIn : tokenOut;
 
-        bool isToken0In = tokenIn == token0;
+        require(minAmountOut <= amountOut, "Amount Out Less Than Minimum");
+        IERC20(tokenIn).transferFrom(msg.sender, pair, amountIn);
 
         uint amount0Out = isToken0In ? 0 : amountOut;
         uint amount1Out = isToken0In ? amountOut : 0;

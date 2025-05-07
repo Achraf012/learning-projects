@@ -93,7 +93,7 @@ contract LiquidityPool is ERC20 {
     }
 
     function swap(uint amount0Out, uint amount1Out, address to) external {
-        require(msg.sender == factory, "Only router/factory can call");
+        require(msg.sender == router, "Only router can call");
         require(initialized, "Not Initialized");
         require(
             amount0Out != 0 || amount1Out != 0,

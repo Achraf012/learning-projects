@@ -6,6 +6,21 @@ contract factory {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
     address router;
+    address owner;
+
+    constructor() {
+        owner = msg.sender;
+    }
+
+    function setRouter(address _router) external {
+        require(msg.sender == owner, "Not The Owner");
+        require(router == address(0), "Router already set");
+        router = _router;
+    }
+
+    function getRouter() external view returns (address) {
+        return router;
+    }
 
     function createPair(address tokenA, address tokenB) external {
         require(tokenA != tokenB, "Cant Use Same Token");

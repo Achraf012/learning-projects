@@ -1,2 +1,5 @@
 [profile.ci.fuzz]
 runs = 10_000
+solc-version = "0.8.24"
+[dependencies]
+
