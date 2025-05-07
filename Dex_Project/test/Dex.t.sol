@@ -70,6 +70,9 @@ contract projectTest is Test {
     function testAddLiquidityUpdatesReservesCorrectly() external {
         createPair();
         vm.startPrank(user);
+
+        testMkToken1.approve(address(_router), type(uint256).max);
+        testMkToken2.approve(address(_router), type(uint256).max);
         _router.addLiquidity(
             address(testMkToken1),
             address(testMkToken2),
@@ -78,11 +81,13 @@ contract projectTest is Test {
             80,
             60
         );
-        (uint256 am1, uint256 am2) = _router.getReserves(
+
+        (uint256 reserve0, uint256 reserve1) = _router.getReserves(
             address(testMkToken1),
             address(testMkToken2)
         );
-        assertEq(am1, 100);
-        assertEq(am2, 90);
+
+        assertEq(reserve0, 100);
+        assertEq(reserve1, 90);
     }
 }
