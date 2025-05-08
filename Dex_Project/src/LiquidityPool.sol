@@ -13,8 +13,23 @@ contract LiquidityPool is ERC20 {
     uint256 reserve0;
     uint256 reserve1;
     bool initialized;
+    event PoolInitialized(address token0, address token1);
+    event LiquidityAdded(
+        address indexed to,
+        uint256 amount0,
+        uint256 amount1,
+        uint256 liquidity
+    );
+    event LiquidityRemoved(
+        address indexed to,
+        uint256 amount0,
+        uint256 amount1,
+        uint256 liquidity
+    );
+    event Swapped(address indexed to, uint256 amount0Out, uint256 amount1Out);
 
     constructor(address _router) ERC20("LP Token", "LPT") {
+        require(_router != address(0), "Address Not Available ( 0 Address)");
         factory = msg.sender;
         router = _router;
     }
@@ -43,9 +58,10 @@ contract LiquidityPool is ERC20 {
             ? (_token0, _token1)
             : (_token1, _token0);
         initialized = true;
+        emit PoolInitialized(token0, token1);
     }
 
-    function getReserves() public view returns (uint256, uint256) {
+    function getReserves() external view returns (uint256, uint256) {
         return (reserve0, reserve1);
     }
 
@@ -62,7 +78,11 @@ contract LiquidityPool is ERC20 {
         reserve1 = IERC20(token1).balanceOf(address(this));
     }
 
-    function addLiquidity(uint amount0, uint amount1, address to) external {
+    function addLiquidity(
+        uint256 amount0,
+        uint256 amount1,
+        address to
+    ) external {
         require(msg.sender == address(router), "Only router can call this");
 
         require(initialized, "Not Initialized");
@@ -77,6 +97,7 @@ contract LiquidityPool is ERC20 {
         }
         _mint(to, mintAmount);
         _updateReserves();
+        emit LiquidityAdded(to, amount0, amount1, mintAmount);
     }
 
     function removeLiquidity(uint256 lp, address to) external {
@@ -90,9 +111,10 @@ contract LiquidityPool is ERC20 {
         IERC20(token0).safeTransfer(to, tokenAmount0);
         IERC20(token1).safeTransfer(to, tokenAmount1);
         _updateReserves();
+        emit LiquidityRemoved(to, tokenAmount0, tokenAmount1, lp);
     }
 
-    function swap(uint amount0Out, uint amount1Out, address to) external {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to) external {
         require(msg.sender == router, "Only router can call");
         require(initialized, "Not Initialized");
         require(
@@ -109,13 +131,15 @@ contract LiquidityPool is ERC20 {
         }
 
         _updateReserves();
+        emit Swapped(to, amount0Out, amount1Out);
     }
 
     function getAmountOut(
-        uint amountIn,
+        uint256 amountIn,
         uint256 reserveIn,
         uint256 reserveOut
-    ) public pure returns (uint256) {
+    ) external pure returns (uint256) {
+        require(amountIn < reserveIn, "Insufficient liquidity");
         uint256 amountInWithFee = amountIn * 997;
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
@@ -123,10 +147,16 @@ contract LiquidityPool is ERC20 {
         return amountOut;
     }
 
-    function getAmountOutView(
-        uint amountIn
-    ) external view returns (uint amountOut) {
-        (uint reserveIn, uint reserveOut) = getReserves();
-        return getAmountOut(amountIn, reserveIn, reserveOut);
+    function getAmountIn(
+        uint256 amountOut,
+        uint256 reserveIn,
+        uint256 reserveOut
+    ) external pure returns (uint256) {
+        require(amountOut < reserveOut, "Insufficient liquidity");
+
+        uint256 numerator = reserveIn * amountOut * 1000;
+        uint256 denominator = (reserveOut - amountOut) * 997;
+        uint256 amountIn = (numerator / denominator) + 1;
+        return amountIn;
     }
 }

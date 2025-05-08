@@ -7,9 +7,34 @@ import "./LiquidityPool.sol";
 
 contract router {
     using SafeERC20 for IERC20;
-    address public factoryAddress;
+    address public immutable factoryAddress;
+
+    event LiquidityAdded(
+        address indexed tokenA,
+        address indexed tokenB,
+        address indexed user,
+        uint256 amountA,
+        uint256 amountB
+    );
+
+    event LiquidityRemoved(
+        address indexed tokenA,
+        address indexed tokenB,
+        address indexed user,
+        uint256 amountA,
+        uint256 amountB
+    );
+
+    event SwapExecuted(
+        address indexed tokenIn,
+        address indexed tokenOut,
+        address indexed user,
+        uint256 amountIn,
+        uint256 amountOut
+    );
 
     constructor(address _factory) {
+        require(_factory != address(0), "Address Not Available ( 0 Address)");
         factoryAddress = _factory;
     }
 
@@ -31,34 +56,6 @@ contract router {
             return (r0, r1);
         } else {
             return (r1, r0);
-        }
-    }
-
-    function swapExactTokensForTokens(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn,
-        uint256 minAmountOut,
-        address to
-    ) external {
-        address pair = getPair(address(tokenIn), address(tokenOut));
-        (uint256 reserveIn, uint256 reserveOut) = getReserves(
-            tokenIn,
-            tokenOut
-        );
-
-        uint256 amountOut = LiquidityPool(pair).getAmountOut(
-            amountIn,
-            reserveIn,
-            reserveOut
-        );
-
-        require(minAmountOut <= amountOut, "Amount Out Less Than Minimum");
-        IERC20(tokenIn).transferFrom(msg.sender, pair, amountIn);
-        if (tokenIn < tokenOut) {
-            LiquidityPool(pair).swap(0, amountOut, to);
-        } else {
-            LiquidityPool(pair).swap(amountOut, 0, to);
         }
     }
 
@@ -129,6 +126,7 @@ contract router {
             );
 
         _safeTransferLiquidity(tokenA, tokenB, pair, depositA, depositB);
+        emit LiquidityAdded(tokenA, tokenB, msg.sender, depositA, depositB);
     }
 
     function removeLiquidity(
@@ -151,7 +149,65 @@ contract router {
 
         IERC20(pair).safeTransferFrom(msg.sender, pair, lpAmount);
         LiquidityPool(pair).removeLiquidity(lpAmount, msg.sender);
+        emit LiquidityRemoved(tokenA, tokenB, msg.sender, amountA, amountB);
     }
 
-    function swapTokensForExactTokens() external {}
+    function swapExactTokensForTokens(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        address to
+    ) external {
+        address pair = getPair(address(tokenIn), address(tokenOut));
+        (uint256 reserveIn, uint256 reserveOut) = getReserves(
+            tokenIn,
+            tokenOut
+        );
+
+        uint256 amountOut = LiquidityPool(pair).getAmountOut(
+            amountIn,
+            reserveIn,
+            reserveOut
+        );
+
+        require(minAmountOut <= amountOut, "Amount Out Less Than Minimum");
+
+        IERC20(tokenIn).safeTransferFrom(msg.sender, pair, amountIn);
+
+        if (tokenIn < tokenOut) {
+            LiquidityPool(pair).swap(0, amountOut, to);
+        } else {
+            LiquidityPool(pair).swap(amountOut, 0, to);
+        }
+        emit SwapExecuted(tokenIn, tokenOut, msg.sender, amountIn, amountOut);
+    }
+
+    function swapTokensForExactTokens(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountOut,
+        uint256 maxAmountIn,
+        address to
+    ) external {
+        address pair = getPair(address(tokenIn), address(tokenOut));
+        (uint256 reserveIn, uint256 reserveOut) = getReserves(
+            tokenIn,
+            tokenOut
+        );
+        uint256 amountIn = LiquidityPool(pair).getAmountIn(
+            amountOut,
+            reserveIn,
+            reserveOut
+        );
+        require(maxAmountIn >= amountIn, "Amount Out Less Than Minimum");
+
+        IERC20(tokenIn).safeTransferFrom(msg.sender, pair, amountIn);
+        if (tokenIn < tokenOut) {
+            LiquidityPool(pair).swap(0, amountOut, to);
+        } else {
+            LiquidityPool(pair).swap(amountOut, 0, to);
+        }
+        emit SwapExecuted(tokenIn, tokenOut, msg.sender, amountIn, amountOut);
+    }
 }
