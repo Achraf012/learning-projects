@@ -136,6 +136,8 @@ contract router {
         uint256 minA,
         uint256 minB
     ) external {
+        require(lpAmount > 0, "ZERO_LP");
+
         address pair = getPair(address(tokenA), address(tokenB));
         (uint256 amountA, uint256 amountB) = LiquidityPool(pair)
             .getRemoveAmounts(lpAmount);
@@ -171,7 +173,7 @@ contract router {
             reserveOut
         );
 
-        require(minAmountOut <= amountOut, "Amount Out Less Than Minimum");
+        require(minAmountOut < amountOut, "Amount Out Less Than Minimum");
 
         IERC20(tokenIn).safeTransferFrom(msg.sender, pair, amountIn);
 
