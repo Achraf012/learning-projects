@@ -8,6 +8,7 @@ import "../src/Factory.sol";
 import "../src/LiquidityPool.sol";
 import "../src/tokenA.sol";
 import "../src/tokenB.sol";
+import "../src/wethToken.sol";
 
 pragma solidity 0.8.27;
 
@@ -15,6 +16,7 @@ contract projectTest is Test {
     LiquidityPool liquidityPool;
     MkToken1 testMkToken1;
     MkToken2 testMkToken2;
+    MockWETH weth;
     factory _factory;
     router _router;
     address public owner;
@@ -24,7 +26,8 @@ contract projectTest is Test {
         user = makeAddr("user");
         owner = makeAddr("owner");
         _factory = new factory();
-        _router = new router(address(_factory));
+        weth = new MockWETH();
+        _router = new router(address(_factory), address(weth));
         _factory.setRouter(address(_router));
         vm.startPrank(user);
         testMkToken1 = new MkToken1("TOKEN1", "TK1");
@@ -506,5 +509,118 @@ contract projectTest is Test {
             101,
             msg.sender
         );
+    }
+
+    function testSwapExactTokensForTokens_should_fail_if_pair_does_not_exist()
+        public
+    {
+        vm.startPrank(user);
+        testMkToken1.approve(address(_router), type(uint256).max);
+        testMkToken2.approve(address(_router), type(uint256).max);
+        vm.expectRevert(bytes("Pair does not exist"));
+        _router.swapExactTokensForTokens(
+            address(testMkToken1),
+            address(testMkToken2),
+            100,
+            40,
+            msg.sender
+        );
+    }
+
+    function testSwapTokensForExactTokens_should_fail_if_pair_does_not_exist()
+        public
+    {
+        vm.startPrank(user);
+        testMkToken1.approve(address(_router), type(uint256).max);
+        testMkToken2.approve(address(_router), type(uint256).max);
+        vm.expectRevert(bytes("Pair does not exist"));
+        _router.swapTokensForExactTokens(
+            address(testMkToken1),
+            address(testMkToken2),
+            62,
+            100,
+            msg.sender
+        );
+    }
+
+    // ---------------- swap-using-ETH ----------------
+    function makeandApproveWETH() public {
+        vm.startPrank(user);
+        vm.deal(user, 100 ether);
+        weth.deposit{value: 50 ether}();
+        weth.approve(address(_router), type(uint256).max);
+        testMkToken1.approve(address(_router), type(uint256).max);
+        _factory.createPair(address(testMkToken1), address(weth));
+        address liquidityPoolAddress = _factory.allPairs(0);
+        liquidityPool = LiquidityPool(liquidityPoolAddress);
+    }
+
+    function testSwapExactTokensForETH_should_swap_and_emit_event() public {
+        makeandApproveWETH();
+        vm.startPrank(user);
+        _router.addLiquidity(
+            address(testMkToken1),
+            address(weth),
+            300,
+            50,
+            0,
+            0
+        );
+
+        testMkToken1.approve(address(_router), type(uint256).max);
+        weth.approve(address(_router), type(uint256).max);
+        vm.expectEmit(true, true, false, true); // indexed1, indexed2, indexed3, data
+        emit router.SwapExecuted(
+            address(testMkToken1),
+            address(weth),
+            msg.sender,
+            100,
+            12
+        );
+        _router.swapExactTokensForEth(address(testMkToken1), 100, 0);
+    }
+
+    function testSwapExactTokensForETH_should_revert_if_amountOut_less_than_minAmountOut()
+        public
+    {
+        vm.startPrank(user);
+        createAndApprove(user);
+        testMkToken1.transfer(address(owner), 100);
+        testMkToken1.approve(address(owner), type(uint256).max);
+        _router.addLiquidity(
+            address(testMkToken1),
+            address(weth),
+            300,
+            250,
+            200,
+            150
+        );
+        vm.startPrank(owner);
+        testMkToken1.approve(address(_router), type(uint256).max);
+        weth.approve(address(_router), type(uint256).max);
+        vm.expectRevert();
+        _router.swapExactTokensForEth(address(testMkToken1), 100, 63);
+    }
+
+    function testSwapExactTokensForETH_should_fail_if_insufficient_allowance_or_balance()
+        public
+    {
+        vm.startPrank(user);
+        createAndApprove(user);
+        testMkToken1.transfer(address(owner), 100);
+        testMkToken1.approve(address(owner), type(uint256).max);
+        _router.addLiquidity(
+            address(testMkToken1),
+            address(weth),
+            300,
+            250,
+            200,
+            150
+        );
+        vm.startPrank(owner);
+        testMkToken1.approve(address(_router), type(uint256).max);
+        weth.approve(address(_router), type(uint256).max);
+        vm.expectRevert();
+        _router.swapExactTokensForEth(address(testMkToken1), 101, 40);
     }
 }

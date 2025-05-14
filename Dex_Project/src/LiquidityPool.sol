@@ -54,9 +54,12 @@ contract LiquidityPool is ERC20 {
         require(factory == msg.sender, "not allowed");
         require(!initialized, "Already Initialized");
         require(_token0 != _token1, "Cant Use Same Token");
-        (token0, token1) = _token0 < _token1
-            ? (_token0, _token1)
-            : (_token1, _token0);
+        // (token0, token1) = _token0 < _token1
+        //     ? (_token0, _token1)
+        //     : (_token1, _token0);
+        token0 = _token0;
+        token1 = _token1;
+
         initialized = true;
         emit PoolInitialized(token0, token1);
     }

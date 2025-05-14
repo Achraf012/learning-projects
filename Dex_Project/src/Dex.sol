@@ -5,9 +5,18 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Factory.sol";
 import "./LiquidityPool.sol";
 
+interface IWETH {
+    function deposit() external payable;
+
+    function withdraw(uint256) external;
+
+    function transfer(address to, uint256 value) external returns (bool);
+}
+
 contract router {
     using SafeERC20 for IERC20;
     address public immutable factoryAddress;
+    IWETH public immutable WETH;
 
     event LiquidityAdded(
         address indexed tokenA,
@@ -33,9 +42,10 @@ contract router {
         uint256 amountOut
     );
 
-    constructor(address _factory) {
+    constructor(address _factory, address _weth) {
         require(_factory != address(0), "Address Not Available ( 0 Address)");
         factoryAddress = _factory;
+        WETH = IWETH(_weth);
     }
 
     function getPair(
@@ -212,4 +222,150 @@ contract router {
         }
         emit SwapExecuted(tokenIn, tokenOut, msg.sender, amountIn, amountOut);
     }
+
+    function swapExactEthForTokens(
+        address tokenOut,
+        uint256 minAmountOut,
+        address to
+    ) external payable {
+        require(msg.value > 0, "ZERO_ETH");
+        WETH.deposit{value: msg.value}();
+        address pair = getPair(address(WETH), address(tokenOut));
+        (uint256 reserveIn, uint256 reserveOut) = getReserves(
+            address(WETH),
+            tokenOut
+        );
+        uint256 amountOut = LiquidityPool(pair).getAmountOut(
+            msg.value,
+            reserveIn,
+            reserveOut
+        );
+        require(minAmountOut <= amountOut, "Amount Out Less Than Minimum");
+
+        WETH.transfer(pair, msg.value);
+        if (address(WETH) < tokenOut) {
+            LiquidityPool(pair).swap(0, amountOut, to);
+        } else {
+            LiquidityPool(pair).swap(amountOut, 0, to);
+        }
+        emit SwapExecuted(
+            address(WETH),
+            tokenOut,
+            msg.sender,
+            msg.value,
+            amountOut
+        );
+    }
+
+    function swapTokensForExactEth(
+        address tokenIn,
+        uint256 amountOut,
+        uint256 maxAmountIn
+    ) external {
+        address pair = getPair(address(tokenIn), address(WETH));
+        (uint256 reserveIn, uint256 reserveOut) = getReserves(
+            tokenIn,
+            address(WETH)
+        );
+        uint256 amountIn = LiquidityPool(pair).getAmountIn(
+            amountOut,
+            reserveIn,
+            reserveOut
+        );
+        require(maxAmountIn >= amountIn, "Amount Out Less Than Minimum");
+
+        IERC20(tokenIn).safeTransferFrom(msg.sender, pair, amountIn);
+        if (address(WETH) < tokenIn) {
+            LiquidityPool(pair).swap(amountOut, 0, address(this));
+        } else {
+            LiquidityPool(pair).swap(0, amountOut, address(this));
+        }
+        WETH.withdraw(amountOut);
+        (bool success, ) = msg.sender.call{value: amountOut}("");
+        require(success, "Transfer Failed");
+        emit SwapExecuted(
+            tokenIn,
+            address(WETH),
+            msg.sender,
+            amountIn,
+            amountOut
+        );
+    }
+
+    function swapExactTokensForEth(
+        address tokenIn,
+        uint256 amountIn,
+        uint256 minAmountOut
+    ) external {
+        address pair = getPair(address(tokenIn), address(WETH));
+        (uint256 reserveIn, uint256 reserveOut) = getReserves(
+            tokenIn,
+            address(WETH)
+        );
+        uint256 amountOut = LiquidityPool(pair).getAmountOut(
+            amountIn,
+            reserveIn,
+            reserveOut
+        );
+        require(minAmountOut <= amountOut, "Amount Out Less Than Minimum");
+
+        IERC20(tokenIn).safeTransferFrom(msg.sender, pair, amountIn);
+        if (address(WETH) < tokenIn) {
+            LiquidityPool(pair).swap(0, amountOut, address(this));
+        } else {
+            LiquidityPool(pair).swap(amountOut, 0, address(this));
+        }
+        WETH.withdraw(amountOut);
+        (bool success, ) = msg.sender.call{value: amountOut}("");
+        require(success, "Transfer Failed");
+        emit SwapExecuted(
+            tokenIn,
+            address(WETH),
+            msg.sender,
+            amountIn,
+            amountOut
+        );
+    }
+
+    function swapEthForExactTokens(
+        address tokenOut,
+        uint256 amountOut,
+        uint256 maxAmountIn,
+        address to
+    ) external payable {
+        require(msg.value > 0, "ZERO_ETH");
+        WETH.deposit{value: msg.value}();
+        address pair = getPair(address(WETH), address(tokenOut));
+        (uint256 reserveIn, uint256 reserveOut) = getReserves(
+            address(WETH),
+            tokenOut
+        );
+        uint256 amountIn = LiquidityPool(pair).getAmountIn(
+            amountOut,
+            reserveIn,
+            reserveOut
+        );
+        require(maxAmountIn >= amountIn, "Amount Out Less Than Minimum");
+
+        WETH.transfer(pair, amountIn);
+        if (address(WETH) < tokenOut) {
+            LiquidityPool(pair).swap(0, amountOut, to);
+        } else {
+            LiquidityPool(pair).swap(amountOut, 0, to);
+        }
+        if (msg.value > amountIn) {
+            uint256 refund = msg.value - amountIn;
+            (bool success, ) = msg.sender.call{value: refund}("");
+            require(success, "Refund failed");
+        }
+        emit SwapExecuted(
+            address(WETH),
+            tokenOut,
+            msg.sender,
+            amountIn,
+            amountOut
+        );
+    }
+
+    receive() external payable {}
 }
