@@ -7,3 +7,6 @@
 [submodule "DAO_Project/lib/forge-std"]
 	path = DAO_Project/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "DAO_Project/lib/openzeppelin-contracts"]
+	path = DAO_Project/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
