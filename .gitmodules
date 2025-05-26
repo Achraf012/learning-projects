@@ -10,3 +10,6 @@
 [submodule "DAO_Project/lib/openzeppelin-contracts"]
 	path = DAO_Project/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "EIP712Hasher/lib/forge-std"]
+	path = EIP712Hasher/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
