@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.27;
+
+import "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
 contract EIP712Hasher {
+    mapping(address => mapping(uint256 => bool)) public hasVoted;
+    mapping(uint256 => mapping(bool => uint256)) public voteResults;
     struct Vote {
         address voter;
         uint256 proposalId;
         bool support;
     }
 
-    bytes32 constant VOTE_TYPEHASH =
+    bytes32 internal constant VOTE_TYPEHASH =
         keccak256("Vote(address voter,uint256 proposalId,bool support)");
-    bytes32 constant DOMAIN_TYPEHASH =
+    bytes32 internal constant DOMAIN_TYPEHASH =
         keccak256(
             "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
         );
@@ -52,5 +56,24 @@ contract EIP712Hasher {
                     getStructHash(voter, proposalId, support)
                 )
             );
+    }
+
+    function voteBySig(
+        address voter,
+        uint256 proposalId,
+        bool support,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        bytes32 digest = getMessageHash(voter, proposalId, support);
+
+        address recovered = ECDSA.recover(digest, v, r, s);
+
+        require(recovered == voter, "Invalid signature");
+        require(!hasVoted[voter][proposalId], "Already voted");
+
+        hasVoted[voter][proposalId] = true;
+        voteResults[proposalId][support] += 1;
     }
 }
