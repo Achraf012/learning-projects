@@ -3,7 +3,7 @@ pragma solidity 0.8.27;
 import "lib/openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import "lib/openzeppelin-contracts/contracts/utils/cryptography/EIP712.sol";
 
-contract hasher is EIP712 {
+contract Hasher is EIP712 {
     constructor() EIP712("achraf", "1") {}
 
     mapping(address => mapping(uint256 => bool)) public hasVoted;
