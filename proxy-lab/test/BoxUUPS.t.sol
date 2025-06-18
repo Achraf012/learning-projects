@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract ProxyTest is Test {
     address owner = address(0x1234);
+    address user = address(0x4324);
 
     BoxUUPS public logicV1;
     ERC1967Proxy public proxy;
@@ -33,13 +34,12 @@ contract ProxyTest is Test {
     }
 
     function testInitialState() public {
-        // owner and default value
         assertEq(box.owner(), owner);
         assertEq(box.value(), 0);
     }
 
     function testSetValue() public {
-        vm.prank(owner);
+        vm.prank(user);
         box.setValue(42);
         assertEq(box.value(), 42);
     }
@@ -58,5 +58,9 @@ contract ProxyTest is Test {
         BoxV2 boxV2 = BoxV2(address(proxy));
         boxV2.add();
         assertEq(boxV2.value(), 43);
+
+        vm.prank(user);
+        vm.expectRevert();
+        box.setValue(42);
     }
 }

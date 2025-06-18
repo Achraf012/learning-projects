@@ -6,6 +6,8 @@ import "../src/BoxUUPS.sol";
 
 contract BoxV2 is BoxUUPS {
     /// @notice new V2 function
+    function setValue(uint256 _value) external override onlyOwner {}
+
     function add() external {
         value += 1;
     }
