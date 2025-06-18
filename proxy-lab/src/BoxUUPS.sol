@@ -13,7 +13,7 @@ contract BoxUUPS is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         __UUPSUpgradeable_init();
     }
 
-    function setValue(uint256 _value) external {
+    function setValue(uint256 _value) external virtual {
         value = _value;
     }
 
