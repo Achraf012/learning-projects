@@ -8,8 +8,9 @@ import "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgrad
 contract BoxUUPS is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     uint256 public value;
 
-    function initialize() public initializer {
-        __Ownable_init(msg.sender);
+    function initialize(address owner) public initializer {
+        __Ownable_init(owner);
+        __UUPSUpgradeable_init();
     }
 
     function setValue(uint256 _value) external {
