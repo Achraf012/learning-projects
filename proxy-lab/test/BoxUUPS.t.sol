@@ -1,4 +1,3 @@
-// File: test/ProxyTest.t.sol
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.27;
 
@@ -33,7 +32,7 @@ contract ProxyTest is Test {
         box = BoxUUPS(address(proxy));
     }
 
-    function testInitialState() public {
+    function testInitialState() public view {
         assertEq(box.owner(), owner);
         assertEq(box.value(), 0);
     }
