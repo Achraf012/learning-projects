@@ -102,7 +102,7 @@ contract v1test is Test {
         dao.vote(1, true);
         vm.prank(user2);
         dao.vote(1, false);
-        vm.warp(block.timestamp + 3 days);
+        vm.warp(block.timestamp + 4 days);
         dao.countVotes(1);
         (, , , , , bool passed) = dao.getProposal(1);
         assertEq(passed, true);
@@ -115,7 +115,7 @@ contract v1test is Test {
         dao.vote(1, false);
         vm.prank(user2);
         dao.vote(1, false);
-        vm.warp(block.timestamp + 3 days);
+        vm.warp(block.timestamp + 4 days);
         dao.countVotes(1);
         (, , , , , bool passed) = dao.getProposal(1);
         assertEq(passed, false);
@@ -129,9 +129,9 @@ contract v1test is Test {
         dao.vote(1, true);
         vm.prank(user2);
         dao.vote(2, false);
-        vm.warp(block.timestamp + 3 days);
-        dao.countVotes(1);
         vm.warp(block.timestamp + 4 days);
+        dao.countVotes(1);
+        vm.warp(block.timestamp + 5 days);
         dao.countVotes(2);
 
         (, , , uint256 yesVotes, , ) = dao.getProposal(1);

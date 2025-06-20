@@ -25,3 +25,6 @@
 [submodule "proxy-lab/lib/openzeppelin-contracts"]
 	path = proxy-lab/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "DAO_Project/lib/openzeppelin-contracts-upgradeable"]
+	path = DAO_Project/lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
