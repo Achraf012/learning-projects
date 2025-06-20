@@ -1,66 +1,43 @@
-## Foundry
+# 🗳️ DAO Project — From Basics to Meta-Voting
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This folder contains the full evolution of a DAO smart contract from a basic version to an upgradable one with EIP-712 support.
 
-Foundry consists of:
+## 📦 Versions
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- **DAO v1** — basic on-chain voting using an ERC20 token for voting power.
+- **DAO v2** — adds UUPS upgradability via OpenZeppelin’s `UUPSUpgradeable`.
+- **DAO v3** — builds on v2 and adds `voteBySig()` using EIP-712 (gasless voting, off-chain signatures, replay protection).
 
-## Documentation
+## 🔐 Features (v3)
 
-https://book.getfoundry.sh/
+- On-chain + off-chain (signature-based) voting
+- Nonce & deadline checks for secure EIP-712 flow
+- UUPS upgradeable with `_authorizeUpgrade`
+- `vote()` and `voteBySig()` both prevent double voting
 
-## Usage
+## 🛠️ Tools
 
-### Build
+- **Solidity** `^0.8.27`
+- **OpenZeppelin Upgradeable Contracts** `v5.3.0`
+- **Foundry** for testing and building
+- **Slither + Aderyn** for vulnerability scanning
 
-```shell
-$ forge build
-```
+## 🧠 Why This?
 
-### Test
+Started as a simple DAO, but then I wanted to:
 
-```shell
-$ forge test
-```
+- Learn how upgradability works under the hood
+- Add gasless voting using EIP-712
+- Think like an attacker (and protect against myself)
 
-### Format
+## 📌 Next
 
-```shell
-$ forge fmt
-```
+- Write complete Foundry tests
+- Run full audits with Slither/Aderyn
+- Try edge-case attack simulations
 
-### Gas Snapshots
+---
 
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+🧪 Built as part of my freelance-ready Solidity journey.  
+Follow me on X for updates and experiments 👇
+https://x.com/BuildWithAchraf
