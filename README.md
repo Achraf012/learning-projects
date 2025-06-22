@@ -1,52 +1,49 @@
-# Learning Projects Repository
+# 🧠 learning-projects
 
-Welcome to the **Learning Projects** repository! This repository contains various blockchain and Web3 projects built as part of my learning journey in Solidity, Hardhat, and smart contract development.
+Welcome to my Solidity learning lab.  
+This repo is a structured collection of smart contract projects I’ve built while studying advanced concepts in decentralized development, smart contract security, and gas optimization.
 
-## Structure
-Each project is organized into its own folder within this repository. This structure helps keep projects separate and manageable.
+Each folder is a standalone project focused on a specific domain: DEX, DAO, Upgradability, Payments, and more.
 
-### Current Projects:
-- **NFT Project**: a decentralized NFT marketplace.
-- **TokenLaunchpad Project** : A decentralized token launchpad that supports Presale, Fair Launch, and IDO with optional vesting and full investor protection.
-- *(More projects will be added as I continue learning and building.)*
+## 📁 Projects Overview
 
-## Technologies Used
-- **Solidity**: Smart contract programming language.
-- **Hardhat**: Ethereum development environment.
-- **Mocha & Chai**: For writing and running tests.
-- **JavaScript**: For interacting with smart contracts.
-- **Git & GitHub**: Version control and project management.
+| Project                                    | Description                                                                                     |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **DAO_Project**                            | A governance system with EIP-712 signatures and upgradable proxies.                             |
+| **Decentralized-Payment-Streaming-System** | ETH and ERC20 streaming payments with V2 upgrade                                                |
+| **Dex_Project**                            | A Uniswap-style AMM with ETH wrapping support, LP tokens, and a factory/router system.          |
+| **EIP712Hasher**                           | Minimal project to isolate and test EIP-712 hashing/signing logic.                              |
+| **EscrowProject**                          | A simple escrow system for secure ETH payments, including factory deployment.                   |
+| **TokenLaunchpad**                         | Token sale with whit LaunchPadFactory, vesting, and safety checks (Overflow, Reentrancy, etc.). |
+| **nft_Project**                            | Basic ERC721 NFT with a marketplace contract.                                                   |
+| **proxy-lab**                              | Hands-on upgradability lab: v1 (basic), v2 (UUPS proxy), v3 (UUPS + EIP-712).                   |
 
-## How to Use
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Achraf012/learning-projects.git
-   ```
-2. Navigate to the project folder:
-   ```bash
-   cd learning-projects/<project-folder>
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Compile the smart contracts:
-   ```bash
-   npx hardhat compile
-   ```
-5. Run tests:
-   ```bash
-   npx hardhat test
-   ```
-6. Deploy the contract (customize the script if needed):
-   ```bash
-   npx hardhat run scripts/deploy.js --network <network-name>
-   ```
+## 🛠️ Stack & Tools
 
-## Future Plans
-- Implementing more complex smart contracts.
-- Exploring decentralized applications (DApps).
-- Adding marketplace, staking, and other Web3 functionalities.
+- **Language:** Solidity (0.8.x)
+- **Framework:** [Foundry](https://book.getfoundry.sh/)
+- **Security:** OpenZeppelin libraries, manual audits, unit + invariant testing
+- **Design:** EIP-712, Proxy Patterns (UUPS), Factory pattern, Access control
 
-Stay tuned for more updates! 🚀
+## 🧪 Tests
 
+most projects include tests written in Foundry (Forge).  
+To run them:
+
+```bash
+forge install
+forge test -vvvv
+```
+
+🧭 Learning Goals
+This repository helps me:
+
+\_Build a strong foundation in smart contract development
+
+\_Practice gas optimization and safe patterns
+
+\_Learn exploit prevention through real-world patterns
+
+\_Prepare for audits, contests (Code4rena, Sherlock), and freelance work
+
+                Feel free to explore any folder, fork the code, or reach out if you're working on something cool. Let's build secure protocols. 🔐
