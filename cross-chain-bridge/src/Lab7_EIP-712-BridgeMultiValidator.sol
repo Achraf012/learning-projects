@@ -21,6 +21,10 @@ contract BridgeEIP712 is Ownable, EIP712 {
         address[] memory _validators,
         uint256 _threshold
     ) external onlyOwner {
+        require(
+            _validators.length > _threshold,
+            "threshold cannot exceed number of validators."
+        );
         validators = _validators;
         requiredSignatures = _threshold;
         for (uint256 i = 0; i < _validators.length; i++) {
