@@ -53,6 +53,11 @@ contract BridgeEIP712 is Ownable, EIP712 {
         address[] memory _validators,
         uint256 _threshold
     ) external onlyOwner {
+        // ill use this just because im learning logic not because its the best thing to do so its for tests only
+        // making a validatorVersion mapping will do better for big number of validators to use less gas
+        for (uint256 i = 0; i < validators.length; i++) {
+            isValidator[validators[i]] = false;
+        }
         validators = _validators;
         requiredSignatures = _threshold;
         for (uint256 i = 0; i < _validators.length; i++) {
@@ -78,7 +83,7 @@ contract BridgeEIP712 is Ownable, EIP712 {
 
     function _digest(
         digestMessage memory message
-    ) public view returns (bytes32) {
+    ) internal view returns (bytes32) {
         bytes32 structHash = _hashBridgeMessage(message);
         return _hashTypedDataV4(structHash);
     }
