@@ -56,4 +56,25 @@ contract testAMM is Test {
         amm.moveTick(1);
         assertEq(amm.activeLiquidity(), 0);
     }
+
+    function test_partialBurn() public {
+        amm.moveTick(1);
+        vm.prank(user1);
+        amm.mintPosition(100, 5, 20);
+        vm.prank(user2);
+        amm.mintPosition(100, 25, 30);
+        vm.prank(user1);
+        amm.partialBurn(0, 40);
+        assertEq(amm.activeLiquidity(), 0);
+
+        int256 l1 = amm.liquidityDeltas(5);
+        int256 l2 = amm.liquidityDeltas(20);
+        int256 l3 = amm.liquidityDeltas(25);
+
+        assertEq(l1, 60);
+        assertEq(l2, -60);
+        assertEq(l3, 100);
+        amm.moveTick(15);
+        assertEq(amm.activeLiquidity(), 60);
+    }
 }

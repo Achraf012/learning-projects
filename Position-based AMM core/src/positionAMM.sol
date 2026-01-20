@@ -79,4 +79,22 @@ contract PositionAMM {
         }
         currentTick = newTick;
     }
+
+    function partialBurn(uint256 positionID, uint256 lq) external {
+        require(ids[positionID].exist == true, "position doesnt exist");
+        require(msg.sender == ids[positionID].owner, "not owner");
+        require(
+            ids[positionID].liquidity > lq && lq > 0,
+            "must burn less than full liquidity"
+        );
+        ids[positionID].liquidity -= lq;
+        uint256 ticklower = ids[positionID].tickLower;
+        uint256 tickupper = ids[positionID].tickUpper;
+
+        liquidityDeltas[ticklower] -= int256(lq);
+        liquidityDeltas[tickupper] += int256(lq);
+        if (ticklower < currentTick && currentTick <= tickupper) {
+            activeLiquidity -= int256(lq);
+        }
+    }
 }
